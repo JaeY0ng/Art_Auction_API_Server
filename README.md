@@ -34,6 +34,8 @@ ERD (Entity-Relationship Diagram) 는 데이터베이스의 구조를 시각적�
    * 'AuctionService.java' : 경매 비즈니스 로직 처리
    * 'BidService.java' : 입찰 비즈니스 로직
    * *이유 : 비즈니스 로직 처리
+
+   
 ### 미술품 경매 서버 의 RED
 
 * Auction
@@ -55,6 +57,9 @@ ERD (Entity-Relationship Diagram) 는 데이터베이스의 구조를 시각적�
    * 'name' : 입찰자 이름
    * 'money' : 입찰자의 자금
  
+ 하나의 경매는 여러 입찰을 가질 수 있고, 하나의 입찰자는 여러 번 입찰 할 수 있는 One-to-Many 의 구조로 구성
+ 
+ 
  ## 경매 등록 API 작동 과정
  1. 경매를 생성 할 때 경매 이름과 종료 날짜 등 을 JSON 데이터로 POST 요청을 할 수 있게 @PostMapping 어노테이션을 이용 함. <br>*(( JSON 형식을 사용 할 때 @PostMapping에 produces = {"application-json"} 을 입력해도 되지만, 기본적으로 JSON 형식을 사용 하기 때문에 필요 X ))*
 
@@ -64,14 +69,33 @@ ERD (Entity-Relationship Diagram) 는 데이터베이스의 구조를 시각적�
 
  4. 'AuctionService' 로 전달 받은 데이터를 저장 하기 위해 'AuctionRepository' 를 이용 ('name'과 'endDate' 등 저장)
 
+### 데이터베이스에 저장되는 정보
+ * 경매 이름 ('name')
+ * 경매 종료 날짜 ('endDate')
+ * 최고 입찰가 ('highestBid', 기본값 0)
+ * 최고 입찰자 ID ('hightestBidderId', 기본값 null)
+ * 경매 종료 여부 ('ended', boolean 기본값 false)
+
 코드
 ```
-@PostMapping
-public Auction createAuction(@RequestBody Auction auction) {
-    return auctionService.createAuction(auction.getName(), auction.getEndDate());
+@RestController
+@RequestMapping("/auction")
+public class AuctionController {
+
+    @Autowired
+    private AuctionService auctionService;
+
+    @PostMapping
+    public Auction createAuction(@RequestBody Auction auction) {
+        return auctionService.createAuction(auction.getName(), auction.getEndDate());
+    }
 }
 ```
 
 ## 입찰 API 작동 과정
 1. 입찰 금액, 경매 ID, 입찰자 ID 의 JSON 데이터를 POST 요청으로 전송
+
+2. 입찰자의 정보를 데이터베이스에 저장
+
+3. 최고 입찰가를 업데이트
  
